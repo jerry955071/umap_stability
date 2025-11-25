@@ -114,3 +114,9 @@ write.csv(
   quote = FALSE
 )
 ```
+
+Print session info 
+
+```{r}
+sessionInfo()
+```

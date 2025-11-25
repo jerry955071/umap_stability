@@ -81,12 +81,6 @@ Elbow plot
 ElbowPlot(seurat_obj, ndims = 100, reduction = "pca")
 ```
 
-Set the number of PC for downstream analyses
-
-```{r}
-npcs <- 30
-```
-
 Clustering
 
 ```{r}
@@ -112,4 +106,10 @@ Print the commands used by the authors to create this Seurat object
 
 ```{r}
 seurat_obj@commands
+```
+
+Print session info 
+
+```{r}
+sessionInfo()
 ```

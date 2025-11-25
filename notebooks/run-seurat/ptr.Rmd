@@ -115,6 +115,8 @@ write.csv(
 )
 ```
 
+Print session info 
+
 ```{r}
 sessionInfo()
 ```
