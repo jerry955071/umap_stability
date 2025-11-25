@@ -1,2 +1,14 @@
+# workspace settings
+.snakemake/*
+.vscode/*
+
+
+# workflow large files
+data/*
+logs/*
+nohup-out/*
+outputs/*
 rawdata/*
-src/*
+reference/*
+src/cellranger/*
+mkref_*/
