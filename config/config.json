@@ -1,0 +1,104 @@
+{
+    "executables": {
+        "cellranger": "src/cellranger/cellranger-9.0.1/cellranger"
+    },
+    "samples": [
+        {
+            "name": "ath",
+            "species": "ath",
+            "runs": [
+                "SRR15992287", 
+                "SRR15992288"
+            ]
+        },
+        {
+            "name": "gar",
+            "species": "gar",
+            "runs": [
+                "SRR23636407",
+                "SRR23636408",
+                "SRR23636409",
+                "SRR23636410",
+                "SRR23636411",
+                "SRR23636412",
+                "SRR23636413",
+                "SRR23636414"
+            ]
+        },
+        {
+            "name": "lch",
+            "species": "lch",
+            "runs": [
+                "SRR15142076",
+                "SRR15142077",
+                "SRR15142078",
+                "SRR15142079"
+            ]
+        },
+        {
+            "name": "osa",
+            "species": "osa",
+            "runs": [
+                "SRR13853440"
+            ]
+        },
+        {
+            "name": "ptr",
+            "species": "ptr",
+            "runs": [
+                "SRR15142072"
+            ]
+        },
+        {
+            "name": "tma",
+            "species": "tma",
+            "runs": [
+                "SRR26905915"
+            ]
+        },
+        {
+            "name": "zma",
+            "species": "zma",
+            "runs": [
+                "SRR26804900"
+            ]
+        }
+    ],
+    "references": [
+        {
+            "species": "ath",
+            "assembly": "reference/ath/Phytozome/PhytozomeV12/early_release/Athaliana_447_Araport11/assembly/Athaliana_447_TAIR10.fa",
+            "annotation": "reference/ath/Phytozome/PhytozomeV13/Athaliana/Araport11/annotation/Athaliana_447_Araport11.gene_exons.gff3"
+        },
+        {
+            "species": "gar",
+            "assembly": "reference/gar/GCF_025698485.1_ASM2569848v2_genomic.fna",
+            "annotation": "reference/gar/GCF_025698485.1_ASM2569848v2_genomic.gtf"
+        },
+        {
+            "species": "lch",
+            "assembly": "reference/lch/Lich.1_0.fa",
+            "annotation": "reference/lch/Lich.1_0.gff"
+        },
+        {
+            "species": "osa",
+            "assembly": "reference/osa/IRGSP-1.0_genome.fasta",
+            "annotation": "reference/osa/IRGSP-1.0_representative_transcript_exon_2025-03-19.gtf"
+        },
+        {
+            "species": "ptr",
+            "assembly": "reference/ptr/Phytozome/PhytozomeV13/Ptrichocarpa/v4.1/assembly/Ptrichocarpa_533_v4.0.fa",
+            "annotation": "reference/ptr/Phytozome/PhytozomeV13/Ptrichocarpa/v4.1/annotation/Ptrichocarpa_533_v4.1.gene_exons.gff3"
+        },
+        {
+            "species": "tma",
+            "assembly": "reference/tma/GCA_019776745.2_Ta-2021_genomic.fna",
+            "annotation": "reference/tma/GCA_019776745.2_Ta-2021_genomic.gtf"
+        },
+        {
+            "species": "zma",
+            "assembly": "reference/zma/Phytozome/PhytozomeV13/Zmays/RefGen_V4/assembly/Zmays_493_APGv4.fa",
+            "annotation": "reference/zma/Phytozome/PhytozomeV13/Zmays/RefGen_V4/annotation/Zmays_493_RefGen_V4.gene_exons.gff3"
+        }
+    ]
+}

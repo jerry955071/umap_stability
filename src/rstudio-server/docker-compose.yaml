@@ -1,0 +1,18 @@
+version: '3.6'
+services:
+  server:
+    image: chiaenu/rstudio_seurat_spacexr:2.2.1
+    restart: unless-stopped
+    command: /init
+    environment:
+      - TZ=Asia/Taipei
+      - USERID=1102
+      - GROUPID=1102
+      - DISABLE_AUTH=false
+      - PASSWORD=0000
+      - ROOT=true
+    ports:
+      - 8792:8787
+    volumes:
+      - /home/woodydrylab/DiskArray/b05b01002/project_umap_re:/workspace:rw
+

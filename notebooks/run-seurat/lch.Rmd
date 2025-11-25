@@ -1,0 +1,116 @@
+---
+title: "Seurat preprocessing"
+author:
+    - "Chia-Chen Chu"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_document:
+  highlight: tango
+  number_sections: no
+  theme: default
+  toc: yes
+  toc_depth: 3
+  toc_float:
+    collapsed: no
+    smooth_scroll: yes
+    
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+NOTE: Run with docker image chiaenu/seurat-rmd:5.0.0
+
+# Input data
+
+Gene expression matrix
+`GSM5453540_filtered_feature_bc_matrix_Lch.tar.gz` were downloaded from
+NCBI GEO as `data/lch/GSM5453540_filtered_feature_bc_matrix_Lch.tar.gz`
+
+Extract data using `tar -xvzf` gives following files:
+
+    filtered_feature_bc_matrix/
+    filtered_feature_bc_matrix/features.tsv.gz
+    filtered_feature_bc_matrix/matrix.mtx.gz
+    filtered_feature_bc_matrix/barcodes.tsv.gz
+
+# Setups
+
+Import libraries
+
+```{r}
+library(Seurat)
+library(magrittr)
+```
+
+Set args
+
+```{r}
+sample_name <- "lch"
+input_file <- sprintf("data/lch/filtered_feature_bc_matrix")
+output_dir <- sprintf("outputs/Seurat/%s", sample_name)
+
+# create output directory
+dir.create(output_dir, recursive = TRUE, showWarnings = FALSE) 
+
+# setup output file paths
+path_rdata <- file.path(output_dir, "seurat_obj.rds") 
+path_pca <- file.path(output_dir, "pca.csv") 
+path_clusters <- file.path(output_dir, "clusters.csv")
+```
+
+# Analysis
+
+Read data
+
+```{r}
+seurat_obj <- Read10X(data.dir = input_file) %>% CreateSeuratObject()
+seurat_obj
+```
+
+Normalize data with sctransform
+
+```{r}
+seurat_obj <- SCTransform(seurat_obj, variable.features.n = 2000)
+VariableFeaturePlot(seurat_obj)
+```
+
+Run PCA
+
+```{r}
+seurat_obj <- RunPCA(seurat_obj, npcs = 100, verbose = TRUE)
+ElbowPlot(seurat_obj, ndims = 100, reduction = "pca")
+```
+
+Set the number of PC for downstream analyses
+
+```{r}
+npcs <- 30
+```
+
+Clustering
+
+(adjust the clustering resolution so that the number of clusters matches
+that in the original study)
+
+```{r}
+seurat_obj <- FindNeighbors(seurat_obj, reduction = "pca", dims = 1:npcs)
+seurat_obj <- FindClusters(seurat_obj, resolution = .4)
+table(seurat_obj$seurat_clusters)
+```
+
+# Export data
+
+```{r}
+saveRDS(seurat_obj, file = path_rdata)
+write.csv(
+  Embeddings(seurat_obj, reduction = "pca")[, 1:npcs], 
+  file = path_pca, 
+  quote = FALSE
+)
+write.csv(
+  Idents(seurat_obj) %>% as.data.frame,
+  file = path_clusters,
+  quote = FALSE
+)
+```

@@ -1,0 +1,8 @@
+﻿Species	Organ	Publication	PMID	Accession number(s)	Available as	Alignment, Barcode calling, Feature counting	Doublet Detection	Normalization
+Taxus Mairei	Leaf	Zhan, 2023	PMID: 37231648	SRR26905915	Raw sequence file	CellRanger (v6.1.1)	DoubletFinder (v.2.0.2)	Default normalization method; Seurat (v.2.3.4)
+Oryza sativa	Root	Zhang, 2021	PMID: 33824350	SRR13853440	Raw sequence file	CellRanger (v3.0.1)	DoubletFinder (v.2.0.2)	LogNormalize; Seurat package (v.3.1.1)
+Populus trichocarpa	Stem	Tung, 2023	PMID: 36624504	SRR15142072	Raw sequence file/Processed data	CellRanger (v5.0.1)	NA	Default normalization method; Seurat (v4.0.3) 
+Liriodendron chinense	Stem	Tung, 2023	PMID: 36624504	SRR15142076;SRR15142077;SRR15142078;SRR15142079	Raw sequence file/Processed data			
+Arabidopsis thaliana	Leaf	Procko, 2022	PMID: 35666176	SRR15992287;SRR15992288	Raw sequence file/Processed data	CellRanger (v3.1.0)	DoubletDecon (version NA)	sctransform
+Gossypium arboreum	Lateral root	Li, 2024	PMID: 39492159	SRR23636407;SRR23636408;SRR23636409;SRR23636410;SRR23636411;SRR23636412;SRR23636413;SRR23636414	Raw sequence file/Processed data	CellRanger (v5.0.0)	Custom criteria	LogNormalize; Seurat (v3.1.2)
+Zea mays	Flower	Sun, 2024	PMID: 38877701	SRR26804900	Raw sequence file/Processed data	STAR	DoubletFinder (v.2.0.3)	Seurat (v.4.3.0)

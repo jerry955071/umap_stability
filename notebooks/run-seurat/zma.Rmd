@@ -1,0 +1,198 @@
+---
+title: "Seurat preprocessing"
+author:
+    - "Chia-Chen Chu"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_document:
+  highlight: tango
+  number_sections: no
+  theme: default
+  toc: yes
+  toc_depth: 3
+  toc_float:
+    collapsed: no
+    smooth_scroll: yes
+    
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+NOTE: Run with docker image chiaenu/seurat-rmd:5.0.0
+
+# Input data
+
+Gene expression matrix `GSE247571_singlecell_raw_counts.matrix.txt.gz`
+were downloaded from NCBI GEO to `data/zma`
+
+Data is downloaded via the following command:
+
+    wget https://ftp.ncbi.nlm.nih.gov/geo/series/GSE247nnn/GSE247571/suppl/GSE247571%5Fsinglecell%5Fraw%5Fcounts.matrix.txt.gz && \
+      mv GSE247571_singlecell_raw_counts.matrix.txt.gz data/zma/
+
+# Setups
+
+Import libraries
+
+```{r}
+library(Seurat)
+library(magrittr)
+```
+
+Set args
+
+```{r}
+sample_name <- "zma"
+input_file <- sprintf("data/zma/GSE247571_singlecell_raw_counts.matrix.txt.gz")
+output_dir <- sprintf("outputs/Seurat/%s", sample_name)
+
+# create output directory
+dir.create(output_dir, recursive = TRUE, showWarnings = FALSE) 
+
+# setup output file paths
+path_rdata <- file.path(output_dir, "seurat_obj.rds") 
+path_pca <- file.path(output_dir, "pca.csv") 
+path_clusters <- file.path(output_dir, "clusters.csv")
+```
+
+# Analysis
+
+Read data
+
+```{r}
+hline <- readLines(con = file(input_file), n = 1)
+col_names <- strsplit(hline, ",")[[1]]
+col_names[1:10]
+```
+
+Identify FM-S2 rep1 cells
+
+(based on Supplementary Table 2 - Sheet 1)
+
+```{r}
+cells <- col_names[2:length(col_names)]
+bios <- cells %>% sapply(function(x){
+    foo <- strsplit(x, "_")[[1]]
+    return(paste(foo[1], foo[2], foo[3], sep = "_"))
+  })
+table(bios)
+```
+
+Subset gene expression of FM-S2 rep1 cells
+
+```{r}
+selected_columns <- col_names %>% grep("E1_e1_1", ., value = TRUE)
+selected_columns <- append(col_names[1], selected_columns)
+mtx <- data.table::fread(input_file, sep = ",", select = selected_columns)
+geneid <- mtx[,1]
+mtx <- mtx[,2:ncol(mtx)]
+mtx <- as.matrix(mtx)
+rownames(mtx) <- geneid$Geneid
+```
+
+Exclude protoplasting sensitive genes
+
+```{r}
+protoplast_gene <- read.table(
+  "data/zma/merge_protoplasting_gene.tsv",
+  sep = "\t", 
+  header = TRUE
+)
+mtx <- mtx[!(geneid$Geneid %in% protoplast_gene$gene.ID), ]
+```
+
+Create Seurat object
+
+```{r}
+seurat_obj <- CreateSeuratObject(mtx)
+seurat_obj
+```
+
+Normalize data with sctransform
+
+```{r}
+seurat_obj <- SCTransform(seurat_obj, variable.features.n = 2000)
+VariableFeaturePlot(seurat_obj)
+```
+
+Cell cycle genes
+
+```{r}
+cell_cycle_gene <- read.table(
+  "data/zma/regress_cell_cycle.tsv",
+  sep = "\t",
+  header = TRUE
+)
+s.genes <- subset(cell_cycle_gene, cell_cycle_gene$type == "S phase")$gene.ID
+g2m.genes <- subset(cell_cycle_gene, cell_cycle_gene$type == "G2/M phase")$gene.ID
+seurat_obj %<>% CellCycleScoring(
+  s.features = s.genes,
+  g2m.features = g2m.genes,
+  set.ident = TRUE
+)
+```
+
+```{r}
+seurat_obj <- SCTransform(
+  seurat_obj,
+  variable.features.n = 2000, 
+  vars.to.regress = c("S.Score", "G2M.Score")
+)
+VariableFeaturePlot(seurat_obj)
+```
+
+Run PCA
+
+```{r}
+seurat_obj <- RunPCA(seurat_obj, npcs = 100, verbose = TRUE)
+ElbowPlot(seurat_obj, ndims = 100, reduction = "pca")
+```
+
+Set the number of PC for downstream analyses
+
+```{r}
+npcs <- 30
+```
+
+Clustering
+
+(adjust the clustering resolution so that the number of clusters matches
+those in the original study)
+
+```{r}
+seurat_obj <- FindNeighbors(seurat_obj, reduction = "pca", dims = 1:npcs)
+seurat_obj <- FindClusters(seurat_obj, resolution = 0.8)
+table(seurat_obj$seurat_clusters)
+```
+
+```{r}
+all.markers <- FindAllMarkers(seurat_obj)
+```
+
+# Export data
+
+```{r}
+saveRDS(seurat_obj, file = path_rdata)
+write.csv(
+  Embeddings(seurat_obj, reduction = "pca")[, 1:npcs], 
+  file = path_pca, 
+  quote = FALSE
+)
+write.csv(
+  Idents(seurat_obj) %>% as.data.frame,
+  file = path_clusters,
+  quote = FALSE
+)
+write.csv(
+  all.markers,
+  file = file.path(output_dir, "cluster_markers.csv"),
+  quote = FALSE
+)
+```
+
+Print session info
+
+```{r}
+sessionInfo()
+```
