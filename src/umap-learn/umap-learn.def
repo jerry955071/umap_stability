@@ -1,0 +1,23 @@
+Bootstrap: docker
+From: mambaorg/micromamba:git-35c00b7-amazon2023
+
+%environment
+    # Ensure micromamba is on PATH
+    export MAMBA_ROOT_PREFIX="/opt/conda"
+    export PATH="/opt/conda/bin:$PATH"
+
+%post
+    # Activate micromamba in the build environment
+    . /usr/local/bin/_activate_current_env.sh
+
+    # Install packages into base env
+    micromamba install -y -n base conda-forge::umap-learn pandas
+
+    # Clean cache
+    micromamba clean -a -y
+
+%runscript
+    #!/bin/bash
+
+    # Activate base environment
+    source /usr/local/bin/_activate_current_env.sh
