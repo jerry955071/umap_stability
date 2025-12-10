@@ -1,5 +1,5 @@
-FROM python:3.9.25-slim
+FROM mambaorg/micromamba:git-35c00b7-amazon2023
 
 # install umap-learn
-RUN pip install umap-learn==0.5.9.post2
-RUN pip install pandas scipy scikit-learn
+RUN micromamba install -y -n base conda-forge::umap-learn pandas tqdm && \
+    micromamba clean -a -y
