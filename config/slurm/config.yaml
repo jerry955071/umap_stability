@@ -1,0 +1,12 @@
+executor: slurm
+jobs: 200
+software-deployment-method: apptainer
+
+default-resources:
+  mem: 4G
+  cpus: 1
+
+slurm:
+  sbatch-defaults:
+    output: "logs/slurm/{rule}_{jobid}.out"
+    error: "logs/slurm/{rule}_{jobid}.err"
