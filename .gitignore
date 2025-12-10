@@ -1,6 +1,7 @@
 # workspace settings
 .snakemake/*
 .vscode/*
+.cache/*
 
 
 # workflow large files
@@ -12,3 +13,4 @@ rawdata/*
 reference/*
 src/cellranger/*
 mkref_*/
+apptainer-tmp/*
