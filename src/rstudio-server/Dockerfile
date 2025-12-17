@@ -8,5 +8,7 @@ ENV PANDOC_VERSION=default
 RUN apt update
 RUN /bin/sh -c /rocker_scripts/install_rstudio.sh # buildkit
 RUN /bin/sh -c /rocker_scripts/install_pandoc.sh # buildkit 
+
+# 
 EXPOSE 8787/tcp
 CMD ["/init"]
