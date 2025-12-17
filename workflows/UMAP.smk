@@ -44,7 +44,7 @@ rule param_table:
 #                 f.write(f"{seed}\n")
 
 rule run_umap_for_a_seed:
-    container: "src/umap-learn/umap-learn_0.5.9.post2"
+    container: "src/umap-learn/umap-learn_0.5.9.post2.sif"
     threads: 5
     resources:
         mem_mb=4000
@@ -54,7 +54,9 @@ rule run_umap_for_a_seed:
     output:
         dout=directory("outputs/UMAP/{sample}/seed{seed}")
     log:
-        "logs/UMAP/umap/seed{seed}/{sample}.log"
+        "logs/UMAP/seed{seed}/{sample}.log"
+    benchmark:
+        "benchmarks/UMAP/seed{seed}/{sample}.txt"
     shell:
         """
         python scripts/run_umap_for_a_seed.py \
