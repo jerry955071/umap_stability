@@ -14,5 +14,6 @@ reference/*
 src/cellranger/*
 mkref_*/
 apptainer-tmp/*
+benchmarks/*
 tests/*
 *.sif
