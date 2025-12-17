@@ -23,13 +23,17 @@ def _assembly(wildcards):
     species = query(config["samples"], "name", wildcards.sample)["species"]
     return query(config["references"], "species", species)["assembly"]
 
-# docker run
-docker_run="docker run --rm -u $(id -u):$(id -g) -v $(pwd):/data -w /data"
-
 # 
 rule Seurat:
     input:
         expand(
             "outputs/Seurat/{sample}",
             sample=[s["name"] for s in config["samples"]]
+        )
+
+rule UMAP:
+    input:
+        expand(
+            "outputs/UMAP/call_umap_per_sample_per_seed/{sample}/done.txt",
+            sample=["ptr"]
         )
