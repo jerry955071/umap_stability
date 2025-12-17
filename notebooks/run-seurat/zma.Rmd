@@ -44,8 +44,11 @@ Set args
 
 ```{r}
 sample_name <- "zma"
-input_file <- sprintf("data/zma/GSE247571_singlecell_raw_counts.matrix.txt.gz")
-output_dir <- sprintf("outputs/Seurat/%s", sample_name)
+
+# input files
+input_file <- "data/zma/GSE247571_singlecell_raw_counts.matrix.txt.gz"
+published_marker_genes <- "data/zma/primary_cluster_marker.tsv"
+output_dir <- file.path("outputs/Seurat/%s", sample_name)
 
 # create output directory
 dir.create(output_dir, recursive = TRUE, showWarnings = FALSE) 
@@ -61,14 +64,18 @@ path_clusters <- file.path(output_dir, "clusters.csv")
 Read data
 
 ```{r}
-hline <- readLines(con = file(input_file), n = 1)
+con <- file(input_file)
+hline <- readLines(con = con, n = 1)
+close(con)
 col_names <- strsplit(hline, ",")[[1]]
 col_names[1:10]
 ```
 
 Identify FM-S2 rep1 cells
 
-(based on Supplementary Table 2 - Sheet 1)
+(based on [Supplementary Table
+2](https://www.cell.com/cms/10.1016/j.molp.2024.06.007/attachment/ea22ee4b-1a75-4e3d-93fb-8d9f7517b7bb/mmc3.xlsx) -
+Sheet 1 quality control of scRNA - Qualified cells)
 
 ```{r}
 cells <- col_names[2:length(col_names)]
@@ -82,24 +89,28 @@ table(bios)
 Subset gene expression of FM-S2 rep1 cells
 
 ```{r}
+# get columns of FM-S2 rep1 cells
 selected_columns <- col_names %>% grep("E1_e1_1", ., value = TRUE)
 selected_columns <- append(col_names[1], selected_columns)
-mtx <- data.table::fread(input_file, sep = ",", select = selected_columns)
-geneid <- mtx[,1]
-mtx <- mtx[,2:ncol(mtx)]
-mtx <- as.matrix(mtx)
-rownames(mtx) <- geneid$Geneid
+
+# read only FM-S2 rep1 cells
+df <- data.table::fread(input_file, sep = ",", select = selected_columns)
+
+# convert to matrix
+geneid <- df$Geneid
+mtx <- df[,2:ncol(df)] %>% as.matrix()
+rownames(mtx) <- geneid
 ```
 
-Exclude protoplasting sensitive genes
+Exclude protoplasting-induced genes
 
 ```{r}
-protoplast_gene <- read.table(
-  "data/zma/merge_protoplasting_gene.tsv",
-  sep = "\t", 
-  header = TRUE
-)
-mtx <- mtx[!(geneid$Geneid %in% protoplast_gene$gene.ID), ]
+# protoplast_gene <- read.table(
+#   "data/zma/merge_protoplasting_gene.tsv",
+#   sep = "\t",
+#   header = TRUE
+# )
+# mtx <- mtx[!(rownames(mtx) %in% protoplast_gene$gene.ID), ]
 ```
 
 Create Seurat object
@@ -116,7 +127,7 @@ seurat_obj <- SCTransform(seurat_obj, variable.features.n = 2000)
 VariableFeaturePlot(seurat_obj)
 ```
 
-Cell cycle genes
+Calculate scoring for cell cycle genes
 
 ```{r}
 cell_cycle_gene <- read.table(
@@ -133,11 +144,29 @@ seurat_obj %<>% CellCycleScoring(
 )
 ```
 
+Calculate module scores for protoplasting-induced genes
+
+```{r}
+protoplast_gene <- read.table(
+  "data/zma/merge_protoplasting_gene.tsv",
+  sep = "\t",
+  header = TRUE
+)
+detected_protoplasting_gene <- intersect(
+  protoplast_gene$gene.ID,
+  Features(seurat_obj)
+)
+seurat_obj %<>% AddModuleScore(
+  features = list(c(detected_protoplasting_gene)),
+  name = "Protoplasting"
+)
+```
+
 ```{r}
 seurat_obj <- SCTransform(
   seurat_obj,
   variable.features.n = 2000, 
-  vars.to.regress = c("S.Score", "G2M.Score")
+  vars.to.regress = c("S.Score", "G2M.Score", "Protoplasting1")
 )
 VariableFeaturePlot(seurat_obj)
 ```
@@ -152,22 +181,89 @@ ElbowPlot(seurat_obj, ndims = 100, reduction = "pca")
 Set the number of PC for downstream analyses
 
 ```{r}
-npcs <- 30
+npcs <- 15
 ```
 
 Clustering
 
-(adjust the clustering resolution so that the number of clusters matches
-those in the original study)
+-   Adjust the clustering resolution so that the number of clusters
+    matches those in the original study
+
+-   Match cluster number to that of the original study using the Jaccard
+    index
+
+    ```{r}
+    JaccardIndex <- function(a, b){length(intersect(a, b)) / length(union(a, b))}
+    ```
 
 ```{r}
-seurat_obj <- FindNeighbors(seurat_obj, reduction = "pca", dims = 1:npcs)
-seurat_obj <- FindClusters(seurat_obj, resolution = 0.8)
-table(seurat_obj$seurat_clusters)
+markers.published <- read.csv("data/zma/sub_cluster_marker.tsv", sep = "\t")
+markers_fig4 <- markers.published[, c("geneID", "cluster", "gene.for.identity.in.Fig..4")] %>% dplyr::distinct(geneID, .keep_all = TRUE)
+markers_fig4
 ```
 
 ```{r}
-all.markers <- FindAllMarkers(seurat_obj)
+seurat_obj <- FindNeighbors(seurat_obj, reduction = "pca", dims = 1:npcs)
+seurat_obj <- FindClusters(seurat_obj, resolution = .4)
+table(seurat_obj$seurat_clusters)
+```
+
+Plot expression of marker genes
+
+```{r}
+DotPlot(
+  seurat_obj, 
+  features = markers_fig4$geneID %>% rev
+) + 
+  RotatedAxis() + 
+  ggplot2::coord_flip()
+```
+
+UMAP visualization
+
+```{r}
+seurat_obj <- RunUMAP(
+  seurat_obj, 
+  dims = 1:npcs
+)
+DimPlot(seurat_obj)
+```
+
+```{r}
+# all.markers <- FindAllMarkers(
+#   seurat_obj,
+#   only.pos = TRUE,
+#   min.pct = 0.25
+# )
+```
+
+Check Jaccard index of cluster marker genes
+
+```{r}
+# # select marker genes by adjusted p-value and log2 fold change
+# mask_padj <- all.markers$p_val_adj < 10 ^ -30
+# mask_l2fc <- all.markers$avg_log2FC > 0.5
+# markers.new <- all.markers[mask_padj & mask_l2fc, ]
+# nrow(markers.new)
+# 
+# # 
+# new_clusters <- markers.new$cluster %>% unique
+# old_clusters <- markers.published$cluster %>% unique
+# j_mtx <- matrix(
+#   ncol = length(new_clusters),
+#   nrow = length(old_clusters)
+# )
+# colnames(j_mtx) <- paste0("cluster_", new_clusters)
+# rownames(j_mtx) <- paste0("cluster_", old_clusters)
+# for (new_cluster in new_clusters) {
+#   for (old_cluster in old_clusters) {
+#     new_markers = markers.new[markers.new$cluster == new_cluster, "gene"]
+#     old_markers = markers.published[markers.published$cluster == old_cluster, "geneID"]
+#     j_index <- JaccardIndex(new_markers, old_markers)
+#     j_mtx[paste0("cluster_", old_cluster), paste0("cluster_", new_cluster)] <- j_index
+#   }
+# }
+# pheatmap::pheatmap(j_mtx)
 ```
 
 # Export data
