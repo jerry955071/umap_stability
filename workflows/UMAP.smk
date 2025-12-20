@@ -47,7 +47,8 @@ rule run_umap_for_a_seed:
     container: "src/umap-learn/umap-learn_0.5.9.post2.sif"
     threads: 5
     resources:
-        mem_mb=4000
+        mem_mb=5000,
+        runtime=90
     input:
         rmd_output="outputs/Seurat/{sample}",
         param_table="outputs/UMAP/param_table.csv"
