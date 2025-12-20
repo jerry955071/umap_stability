@@ -17,3 +17,6 @@ apptainer-tmp/*
 benchmarks/*
 tests/*
 *.sif
+
+# snakemake environment files
+snakemake_v9/*
