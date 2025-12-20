@@ -35,5 +35,5 @@ rule UMAP:
     input:
         expand(
             "outputs/UMAP/call_umap_per_sample_per_seed/{sample}/done.txt",
-            sample=["ptr"]
+            sample=["ath", "gar", "lch", "osa", "ptr", "tma"]
         )
