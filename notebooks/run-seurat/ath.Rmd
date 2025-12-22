@@ -81,6 +81,10 @@ Elbow plot
 ElbowPlot(seurat_obj, ndims = 100, reduction = "pca")
 ```
 
+```{r}
+npcs <- 30
+```
+
 Clustering
 
 ```{r}
@@ -108,7 +112,7 @@ Print the commands used by the authors to create this Seurat object
 seurat_obj@commands
 ```
 
-Print session info 
+Print session info
 
 ```{r}
 sessionInfo()
