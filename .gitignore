@@ -18,5 +18,8 @@ benchmarks/*
 tests/*
 *.sif
 
-# snakemake environment files
+# 
 snakemake_v9/*
+
+# python 
+*/.ipynb_checkpoints/*
