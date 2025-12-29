@@ -7,10 +7,10 @@ random.seed(42)
 seeds = random.sample(range(10**4, 10**5 -1), n_seeds)
 
 # params to test
-n_neighbors=[2, 5, 10, 20, 50, 100, 200]
-min_dist=[0.0, 0.1, 0.25, 0.5, 0.8, 0.99]
-metric=["euclidean", "manhattan", "cosine", "correlation"]
-n_epochs=[200, 300, 500]
+n_neighbors=[10, 30, 50, 100, 200]
+min_dist=[0.0, 0.1, 0.3, 0.5, 0.8, 0.99]
+metric=["euclidean", "cosine", "correlation"]
+n_epochs=[100, 200, 500, 700]
 n_combinations = len(n_neighbors) * len(min_dist) * len(metric) * len(n_epochs)
 rule param_table:
     output:
@@ -28,27 +28,50 @@ rule param_table:
         df.index.name = "param_set"
         df.to_csv(output[0])
 
-# rule generate_seeds:
-#     output:
-#         "outputs/UMAP/seeds.txt"
-#     params:
-#         n_seeds=n_seeds
-#     log:
-#         "logs/UMAP/generate_seeds.log"
-#     run:
-#         import random
-#         random.seed(42)
-#         seeds = random.sample(range(10**4, 10**5 -1), params.n_seeds)
-#         with open(output[0], "w") as f:
-#             for seed in seeds:
-#                 f.write(f"{seed}\n")
+rule generate_seeds:
+    output:
+        "outputs/UMAP/seeds.txt"
+    params:
+        n_seeds=n_seeds
+    log:
+        "logs/UMAP/generate_seeds.log"
+    run:
+        import random
+        random.seed(42)
+        seeds = random.sample(range(10**4, 10**5 -1), params.n_seeds)
+        with open(output[0], "w") as f:
+            for seed in seeds:
+                f.write(f"{seed}\n")
+
+
+def umap_runtime(wildcards):
+    runtime_dict = {
+        "ath": "100h", # to be confirmed
+        "ptr": "1.5h",
+        "tma": "3h",
+        "lch": "1.5h",
+        "gar": "1.5h",
+        "osa": "7h",
+        "zma": "12h" # to be confirmed
+    }
+    return runtime_dict.get(wildcards.sample)
+
+def umap_mem_mb_per_cpu(wildcards):
+    mem_dict = {
+        "ptr": 1000,
+        "tma": 1000,
+        "lch": 600,
+        "gar": 900,
+        "osa": 1500
+    }
+    return mem_dict.get(wildcards.sample)
 
 rule run_umap_for_a_seed:
     container: "src/umap-learn/umap-learn_0.5.9.post2.sif"
     threads: 5
     resources:
-        mem_mb=5000,
-        runtime=90
+        mem_mb_per_cpu=umap_mem_mb_per_cpu,
+        runtime=umap_runtime
     input:
         rmd_output="outputs/Seurat/{sample}",
         param_table="outputs/UMAP/param_table.csv"
@@ -66,18 +89,18 @@ rule run_umap_for_a_seed:
             --seed {wildcards.seed} \
             --output_dir {output.dout} \
             --n_process {threads} \
-        2> {log} 
-        1> {log}
+        > {log} 2>&1
         """
 
 rule call_umap_per_sample:
     input:
         param_table="outputs/UMAP/param_table.csv",
+        seed_list="outputs/UMAP/seeds.txt",
         umaps=lambda wildcards: [
             f"outputs/UMAP/{wildcards.sample}/seed{seed}" for seed in seeds
         ]
     output:
-        "outputs/UMAP/call_umap_per_sample_per_seed/{sample}/done.txt"
+        "outputs/UMAP/call_umap_per_sample_per_seed/{sample}/done.txt",
     log:
         "logs/UMAP/call_umap_per_sample_per_seed/{sample}.log"
     shell:
