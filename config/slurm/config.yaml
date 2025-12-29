@@ -5,6 +5,7 @@ software-deployment-method: apptainer
 default-resources:
   mem: 4G
   cpus: 1
+  runtime: 20
 
 slurm:
   sbatch-defaults:
