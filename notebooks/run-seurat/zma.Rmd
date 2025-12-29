@@ -102,17 +102,6 @@ mtx <- df[,2:ncol(df)] %>% as.matrix()
 rownames(mtx) <- geneid
 ```
 
-Exclude protoplasting-induced genes
-
-```{r}
-# protoplast_gene <- read.table(
-#   "data/zma/merge_protoplasting_gene.tsv",
-#   sep = "\t",
-#   header = TRUE
-# )
-# mtx <- mtx[!(rownames(mtx) %in% protoplast_gene$gene.ID), ]
-```
-
 Create Seurat object
 
 ```{r}
@@ -229,43 +218,6 @@ seurat_obj <- RunUMAP(
 DimPlot(seurat_obj)
 ```
 
-```{r}
-# all.markers <- FindAllMarkers(
-#   seurat_obj,
-#   only.pos = TRUE,
-#   min.pct = 0.25
-# )
-```
-
-Check Jaccard index of cluster marker genes
-
-```{r}
-# # select marker genes by adjusted p-value and log2 fold change
-# mask_padj <- all.markers$p_val_adj < 10 ^ -30
-# mask_l2fc <- all.markers$avg_log2FC > 0.5
-# markers.new <- all.markers[mask_padj & mask_l2fc, ]
-# nrow(markers.new)
-# 
-# # 
-# new_clusters <- markers.new$cluster %>% unique
-# old_clusters <- markers.published$cluster %>% unique
-# j_mtx <- matrix(
-#   ncol = length(new_clusters),
-#   nrow = length(old_clusters)
-# )
-# colnames(j_mtx) <- paste0("cluster_", new_clusters)
-# rownames(j_mtx) <- paste0("cluster_", old_clusters)
-# for (new_cluster in new_clusters) {
-#   for (old_cluster in old_clusters) {
-#     new_markers = markers.new[markers.new$cluster == new_cluster, "gene"]
-#     old_markers = markers.published[markers.published$cluster == old_cluster, "geneID"]
-#     j_index <- JaccardIndex(new_markers, old_markers)
-#     j_mtx[paste0("cluster_", old_cluster), paste0("cluster_", new_cluster)] <- j_index
-#   }
-# }
-# pheatmap::pheatmap(j_mtx)
-```
-
 # Export data
 
 ```{r}
@@ -278,11 +230,6 @@ write.csv(
 write.csv(
   Idents(seurat_obj) %>% as.data.frame,
   file = path_clusters,
-  quote = FALSE
-)
-write.csv(
-  all.markers,
-  file = file.path(output_dir, "cluster_markers.csv"),
   quote = FALSE
 )
 ```
