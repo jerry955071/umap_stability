@@ -8,6 +8,7 @@ import os
 import warnings
 import concurrent.futures
 import random
+import sys
 
 warnings.filterwarnings("ignore", category=UserWarning)
 
@@ -125,3 +126,5 @@ if __name__ == "__main__":
             all_results.extend(fut.result())
 
     pd.DataFrame(all_results).to_csv(output_csv, index=False)
+
+sys.exit(0)
