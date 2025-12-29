@@ -35,5 +35,21 @@ rule UMAP:
     input:
         expand(
             "outputs/UMAP/call_umap_per_sample_per_seed/{sample}/done.txt",
-            sample=["ath", "gar", "lch", "osa", "ptr", "tma"]
+            sample=["ath"]
+        )
+# "gar", "lch", "osa", "tma", "zma"
+
+rule InterClusterAngle:
+    input:
+        expand(
+            "outputs/InterClusterAngle/{sample}.csv",
+            sample=["ptr", "gar", "lch", "osa", "tma"]
+        )
+
+rule UMAP_test:
+    input:
+        expand(
+            "outputs/UMAP/{sample}/seed{seed}",
+            sample=["ptr", "ath", "gar", "lch", "osa", "tma", "zma"],
+            seed=[61856]
         )
