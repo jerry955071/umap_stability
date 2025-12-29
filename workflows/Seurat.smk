@@ -10,8 +10,10 @@ def _seurat_input(wildcards):
 
 rule seurat_preprocessing:
     container: "src/seurat-rmd/seurat-rmd_5.0.0.sif"
+    threads: 10
     resources:
-        cpus=10
+        mem_mb_per_cpu=5000,
+        runtime=600
     input:
         _seurat_input
     output:
