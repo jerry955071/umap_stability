@@ -8,6 +8,7 @@
 data/*
 logs/*
 nohup-out/*
+notebooks/inter-cluster-angle/temp/*
 outputs/*
 rawdata/*
 reference/*
@@ -18,8 +19,11 @@ benchmarks/*
 tests/*
 *.sif
 
-# 
+# ignore Snakemake environment directory and snkmt database (a logger for Snakemake runs)
 snakemake_v9/*
+snkmt-db
 
-# python 
-*/.ipynb_checkpoints/*
+# ignore Jupyter Notebook checkpoints
+**/.ipynb_checkpoints/*
+*-checkpoint.ipynb
+*-checkpoint.py
