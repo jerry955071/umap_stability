@@ -30,26 +30,22 @@ argparser.add_argument("--umap_indir", required=True)
 argparser.add_argument("--cluster_table", required=True)
 argparser.add_argument("--param_table", required=True)
 argparser.add_argument("--seed_list")
-argparser.add_argument("--output_csv", required=True)
+argparser.add_argument("--output_dir", required=True)
 argparser.add_argument("--n_process", type=int, default=1)
 args = argparser.parse_args()
 
 umap_indir = Path(args.umap_indir)
 cluster_table = Path(args.cluster_table)
 param_table = Path(args.param_table)
-output_csv = Path(args.output_csv)
+output_dir = Path(args.output_dir)
 n_process = int(args.n_process)
 
-os.makedirs(output_csv.parent, exist_ok=True)
+os.makedirs(output_dir, exist_ok=True)
 
 # ----------------------------
 # Seeds
 # ----------------------------
-if args.seed_list is not None:
-    seeds = [int(x) for x in open(args.seed_list).read().strip().split("\n")]
-else:
-    random.seed(42)
-    seeds = random.sample(range(10**4, 10**5 - 1), 1000)
+seeds = [int(x) for x in open(args.seed_list).read().strip().split("\n")]
 
 # ----------------------------
 # Parameter sets
@@ -100,7 +96,11 @@ def run_one_seed(seed):
                 param_set
             )
         )
-    return rows
+    pd.DataFrame(rows).to_csv(
+        output_dir / f"seed{seed}.csv",
+        index=False
+    )
+    return
 
 # ----------------------------
 # Main
@@ -123,8 +123,8 @@ if __name__ == "__main__":
             concurrent.futures.as_completed(futures),
             total=len(futures)
         ):
-            all_results.extend(fut.result())
+            fut.result()
+        
 
-    pd.DataFrame(all_results).to_csv(output_csv, index=False)
 
 sys.exit(0)
