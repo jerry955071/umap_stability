@@ -9,6 +9,7 @@ data/*
 logs/*
 nohup-out/*
 notebooks/inter-cluster-angle/temp/*
+notebooks/inter-cluster-angle/Old/*
 outputs/*
 rawdata/*
 reference/*
