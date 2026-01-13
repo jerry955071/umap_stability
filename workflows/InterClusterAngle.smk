@@ -1,6 +1,6 @@
 rule inter_cluster_angle_per_sample:
     container: "src/umap-learn/umap-learn_0.5.9.post2.sif"
-    threads: 48
+    threads: 80
     resources:
         mem_mb_per_cpu=5000,
         runtime=240
@@ -10,7 +10,7 @@ rule inter_cluster_angle_per_sample:
         param_table="outputs/UMAP/param_table.csv",
         seed_list="outputs/UMAP/seeds.txt"
     output:
-        "outputs/InterClusterAngle/{sample}.csv"
+        directory("outputs/InterClusterAngle/{sample}")
     params:
         umap_dir="outputs/UMAP/{sample}"
     log:
@@ -24,7 +24,7 @@ rule inter_cluster_angle_per_sample:
             --cluster_table {input.cluster_table} \
             --param_table {input.param_table} \
             --seed_list {input.seed_list} \
-            --output_csv {output} \
+            --output_dir {output} \
             --n_process {threads} \
         > {log} 2>&1
         """
