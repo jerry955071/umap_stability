@@ -77,7 +77,7 @@ ElbowPlot(seurat_obj, ndims = 100, reduction = "pca")
 Set the number of PC for downstream analyses
 
 ```{r}
-npcs <- 50
+npcs <- 30
 ```
 
 Clustering
@@ -87,7 +87,7 @@ those in the original study)
 
 ```{r}
 seurat_obj <- FindNeighbors(seurat_obj, reduction = "pca", dims = 1:npcs)
-seurat_obj <- FindClusters(seurat_obj, resolution = 0.7)
+seurat_obj <- FindClusters(seurat_obj, resolution = 0.75)
 table(seurat_obj$seurat_clusters)
 ```
 
@@ -107,7 +107,7 @@ write.csv(
 )
 ```
 
-Print session info 
+Print session info
 
 ```{r}
 sessionInfo()
