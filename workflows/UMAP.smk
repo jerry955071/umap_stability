@@ -1,10 +1,10 @@
 configfile: "config/config.json"
 
 # number of seed
-n_seeds = 1000
+n_seeds = 1000 # for testing, use only 500 seeds
 import random
 random.seed(42)
-seeds = random.sample(range(10**4, 10**5 -1), n_seeds)
+seeds = random.sample(range(10**4, 10**5 -1), n_seeds) 
 
 # params to test
 n_neighbors=[10, 30, 50, 100, 200]
@@ -46,25 +46,28 @@ rule generate_seeds:
 
 def umap_runtime(wildcards):
     runtime_dict = {
-        "ath": "100h", # to be confirmed
-        "ptr": "1.5h",
-        "tma": "3h",
-        "lch": "1.5h",
-        "gar": "1.5h",
-        "osa": "7h",
-        "zma": "12h" # to be confirmed
+        "ath": "4h",
+        "ptr": "1h",
+        "tma": "1.5h",
+        "lch": "0.7h",
+        "gar": "1h",
+        "osa": "2.5h",
+        "zma": "1.1h"
     }
     return runtime_dict.get(wildcards.sample)
 
 def umap_mem_mb_per_cpu(wildcards):
     mem_dict = {
-        "ptr": 1000,
-        "tma": 1000,
-        "lch": 600,
-        "gar": 900,
-        "osa": 1500
+        "ath": 5000,
+        "ptr": 858.521,
+        "tma": 1011.73,
+        "lch": 556.733,
+        "gar": 958.709,
+        "osa": 5000,
+        "zma": 858, # to be confirmed
     }
     return mem_dict.get(wildcards.sample)
+
 
 rule run_umap_for_a_seed:
     container: "src/umap-learn/umap-learn_0.5.9.post2.sif"
@@ -83,7 +86,7 @@ rule run_umap_for_a_seed:
         "benchmarks/UMAP/seed{seed}/{sample}.txt"
     shell:
         """
-        python scripts/run_umap_for_a_seed.py \
+        exec python scripts/run_umap_for_a_seed.py \
             --rmd_input {input.rmd_output} \
             --param_table {input.param_table} \
             --seed {wildcards.seed} \
@@ -93,20 +96,54 @@ rule run_umap_for_a_seed:
         """
 
 rule call_umap_per_sample:
+    threads: 1
+    resources:
+        runtime=30
     input:
         param_table="outputs/UMAP/param_table.csv",
         seed_list="outputs/UMAP/seeds.txt",
-        umaps=lambda wildcards: [
+        umap_dirs=lambda wildcards: [
             f"outputs/UMAP/{wildcards.sample}/seed{seed}" for seed in seeds
         ]
     output:
-        "outputs/UMAP/call_umap_per_sample_per_seed/{sample}/done.txt",
+        "outputs/UMAP/call_umap_per_sample_per_seed/{sample}/done.txt"
+    params:
+        clean_dir=False
     log:
         "logs/UMAP/call_umap_per_sample_per_seed/{sample}.log"
-    shell:
-        """
-        echo "UMAP calls completed for sample {wildcards.sample}" > {output[0]}
-        """
+    run:
+        import os, sys, shutil
+
+        # get number of param sets
+        n_param_set = len([line for line in open(input.param_table)]) - 1  # minus header
+
+        # loop through umap dirs
+        ALL_SEEDS_OK = True
+        with open(output[0], "w") as out_f, open(log[0], "w") as log_f:
+            # 
+            for umap_dir in input.umap_dirs:
+                # check if number of .csv files match number of param sets
+                n_files = len([f for f in os.listdir(umap_dir) if f.endswith(".csv")])
+                if n_files != n_param_set:
+                    print(f"Number of UMAP output files in {umap_dir} ({n_files}) does not match number of parameter sets ({n_param_set})", file=log_f)
+                    ALL_SEEDS_OK = False
+                    if params.clean_dir:
+                        # clean up incomplete output directory
+                        shutil.rmtree(umap_dir)
+                        print(f"Removed incomplete output directory {umap_dir}", file=log_f)
+                else:
+                    print(f"UMAP output directory {umap_dir} is complete with {n_files} files.", file=log_f)
+            # 
+            if ALL_SEEDS_OK:
+                print(f"All UMAP outputs for sample {wildcards.sample} are complete.", file=log_f)
+                out_f.write("UMAP calls completed successfully.\n")
+            else:
+                print(f"UMAP outputs for sample {wildcards.sample} are incomplete. Please rerun the workflow.", file=log_f)
+                sys.exit(1)
+        
+
+            
+
 
 # rule run_umap_test:
 #     container: "src/umap-learn/umap-learn_0.5.9.post2"
