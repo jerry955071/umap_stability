@@ -2,6 +2,7 @@ include: "workflows/CellRanger.smk"
 include: "workflows/Seurat.smk"
 include: "workflows/UMAP.smk"
 include: "workflows/InterClusterAngle.smk"
+include: "workflows/AlignEmbeddings.smk"
 
 configfile: "config/config.json"
 
@@ -23,7 +24,9 @@ def _assembly(wildcards):
     species = query(config["samples"], "name", wildcards.sample)["species"]
     return query(config["references"], "species", species)["assembly"]
 
-# 
+# samples
+samples = ["ath", "gar", "lch", "osa", "ptr", "tma", "zma"]
+
 rule Seurat:
     input:
         expand(
@@ -31,25 +34,16 @@ rule Seurat:
             sample=[s["name"] for s in config["samples"]]
         )
 
+rule InterClusterAngle:
+    input:
+        expand(
+            "outputs/InterClusterAngle/{sample}",
+            sample=[s["name"] for s in config["samples"]]
+        )
+
 rule UMAP:
     input:
         expand(
             "outputs/UMAP/call_umap_per_sample_per_seed/{sample}/done.txt",
-            sample=["ath"]
-        )
-# "gar", "lch", "osa", "tma", "zma"
-
-rule InterClusterAngle:
-    input:
-        expand(
-            "outputs/InterClusterAngle/{sample}.csv",
-            sample=["ptr", "gar", "lch", "osa", "tma"]
-        )
-
-rule UMAP_test:
-    input:
-        expand(
-            "outputs/UMAP/{sample}/seed{seed}",
-            sample=["ptr", "ath", "gar", "lch", "osa", "tma", "zma"],
-            seed=[61856]
+            sample=["ath", "gar", "lch", "ptr", "tma"]
         )
