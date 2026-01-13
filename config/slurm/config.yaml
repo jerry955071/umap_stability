@@ -3,8 +3,7 @@ jobs: unlimited
 software-deployment-method: apptainer
 
 default-resources:
-  mem: 4G
-  cpus: 1
+  max_mem_mb_per_cpu: 5000
   runtime: 20
 
 slurm:
