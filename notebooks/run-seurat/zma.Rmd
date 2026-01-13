@@ -48,7 +48,7 @@ sample_name <- "zma"
 # input files
 input_file <- "data/zma/GSE247571_singlecell_raw_counts.matrix.txt.gz"
 published_marker_genes <- "data/zma/primary_cluster_marker.tsv"
-output_dir <- file.path("outputs/Seurat/%s", sample_name)
+output_dir <- sprintf("outputs/Seurat/%s", sample_name)
 
 # create output directory
 dir.create(output_dir, recursive = TRUE, showWarnings = FALSE) 
@@ -147,7 +147,7 @@ detected_protoplasting_gene <- intersect(
 )
 seurat_obj %<>% AddModuleScore(
   features = list(c(detected_protoplasting_gene)),
-  name = "Protoplasting"
+  name = "Protoplasting_"
 )
 ```
 
@@ -155,7 +155,7 @@ seurat_obj %<>% AddModuleScore(
 seurat_obj <- SCTransform(
   seurat_obj,
   variable.features.n = 2000, 
-  vars.to.regress = c("S.Score", "G2M.Score", "Protoplasting1")
+  vars.to.regress = c("S.Score", "G2M.Score", "Protoplasting_1")
 )
 VariableFeaturePlot(seurat_obj)
 ```
@@ -170,26 +170,14 @@ ElbowPlot(seurat_obj, ndims = 100, reduction = "pca")
 Set the number of PC for downstream analyses
 
 ```{r}
-npcs <- 15
+npcs <- 30
 ```
 
 Clustering
 
--   Adjust the clustering resolution so that the number of clusters
-    matches those in the original study
+Adjust the clustering resolution so that the number of clusters matches
+those in the original study
 
--   Match cluster number to that of the original study using the Jaccard
-    index
-
-    ```{r}
-    JaccardIndex <- function(a, b){length(intersect(a, b)) / length(union(a, b))}
-    ```
-
-```{r}
-markers.published <- read.csv("data/zma/sub_cluster_marker.tsv", sep = "\t")
-markers_fig4 <- markers.published[, c("geneID", "cluster", "gene.for.identity.in.Fig..4")] %>% dplyr::distinct(geneID, .keep_all = TRUE)
-markers_fig4
-```
 
 ```{r}
 seurat_obj <- FindNeighbors(seurat_obj, reduction = "pca", dims = 1:npcs)
@@ -200,12 +188,23 @@ table(seurat_obj$seurat_clusters)
 Plot expression of marker genes
 
 ```{r}
+# get marker genes for ear FM-S2 from Supplementary data (Sheet9)
+markers.sheet9 <- read.csv("data/zma/Sheet9_ear_FM-S2 marker.tsv", sep = "\t")
+named_markers <- markers.sheet9 %>% 
+  subset(., !markers.sheet9$gene.for.identity.in.Fig..4 %in% c("*", "")) %>% 
+  dplyr::group_by(geneID) %>%
+  dplyr::summarise(
+    clusters = paste(cluster, collapse = ", "),
+    gene_name = head(gene.for.identity.in.Fig..4, 1)
+  ) %>% 
+  dplyr::arrange(clusters)
+print(named_markers)
+
+```{r}
+# dot plot
 DotPlot(
-  seurat_obj, 
-  features = markers_fig4$geneID %>% rev
-) + 
-  RotatedAxis() + 
-  ggplot2::coord_flip()
+  seurat_obj, features = named_markers$geneID %>% rev
+) + ggplot2::coord_flip()
 ```
 
 UMAP visualization
