@@ -1,0 +1,18 @@
+version: '3.6'
+services:
+  server:
+    image: chiaenu/rstudio-scdeed:0.1.0
+    restart: unless-stopped
+    command: /init
+    environment:
+      - TZ=Asia/Taipei
+      - USERID=1102
+      - GROUPID=1102
+      - DISABLE_AUTH=false
+      - PASSWORD=0000
+      - ROOT=true
+    ports:
+      - 8798:8787
+    volumes:
+      - /home/woodydrylab/DiskArray/b05b01002/project_umap_re:/home/rstudio/workspace:rw
+
